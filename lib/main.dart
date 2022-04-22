@@ -48,7 +48,8 @@ class _AppState extends State<App> {
         }
 
         // Otherwise, show something whilst waiting for initialization to complete
-        return const Text('loading');
+        return const Directionality(
+            textDirection: TextDirection.ltr, child: Text('Loading...'));
       },
     );
   }

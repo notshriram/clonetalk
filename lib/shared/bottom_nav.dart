@@ -22,7 +22,7 @@ class BottomNavBar extends StatelessWidget {
         //change the page based on the index
         switch (index) {
           case 0:
-            Navigator.pushNamed(context, '/home');
+            Navigator.pushNamed(context, '/');
             break;
           case 1:
             Navigator.pushNamed(context, '/profile');

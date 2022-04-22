@@ -30,6 +30,13 @@
             {
               "client_id": "764642981880-qcok55eqphsv5mb60ns5ars9fk8h5k80.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "764642981880-6on78hmola8d4drjg63j6ng6nle2alkr.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "project.bvritece.clonetalk"
+              }
             }
           ]
         }
