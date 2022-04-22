@@ -1,3 +1,4 @@
+import 'package:clonetalk/shared/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,6 +17,7 @@ class HomeScreen extends StatelessWidget {
         },
         child: const Icon(Icons.arrow_forward),
       ),
+      bottomNavigationBar: const BottomNavBar(),
     );
   }
 }

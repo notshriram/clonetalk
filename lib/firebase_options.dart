@@ -44,7 +44,8 @@ class DefaultFirebaseOptions {
     appId: '1:764642981880:android:cfc5a4ad73722f30e7480d',
     messagingSenderId: '764642981880',
     projectId: 'voice-clone-api',
-    databaseURL: 'https://voice-clone-api-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://voice-clone-api-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'voice-clone-api.appspot.com',
   );
 
@@ -53,9 +54,11 @@ class DefaultFirebaseOptions {
     appId: '1:764642981880:ios:91d7542bd6c167d2e7480d',
     messagingSenderId: '764642981880',
     projectId: 'voice-clone-api',
-    databaseURL: 'https://voice-clone-api-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://voice-clone-api-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'voice-clone-api.appspot.com',
-    iosClientId: '764642981880-6on78hmola8d4drjg63j6ng6nle2alkr.apps.googleusercontent.com',
+    iosClientId:
+        '764642981880-6on78hmola8d4drjg63j6ng6nle2alkr.apps.googleusercontent.com',
     iosBundleId: 'project.bvritece.clonetalk',
   );
 }
