@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "764642981880",
+    "firebase_url": "https://voice-clone-api-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "voice-clone-api",
+    "storage_bucket": "voice-clone-api.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764642981880:android:cfc5a4ad73722f30e7480d",
+        "android_client_info": {
+          "package_name": "project.bvritece.clonetalk"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "764642981880-qcok55eqphsv5mb60ns5ars9fk8h5k80.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBOguCePCcX9q_Gjp3Jq2vydRLaLVqlrBI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "764642981880-qcok55eqphsv5mb60ns5ars9fk8h5k80.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
