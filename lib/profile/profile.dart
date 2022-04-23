@@ -1,3 +1,4 @@
+import 'package:clonetalk/profile/recorder.dart';
 import 'package:clonetalk/services/auth.dart';
 import 'package:flutter/material.dart';
 
@@ -10,13 +11,21 @@ class ProfileScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Profile'),
         ),
-        body: ElevatedButton(
-          child: Text('Logout'),
-          onPressed: () async {
-            await AuthService().signOut();
-            Navigator.of(context)
-                .pushNamedAndRemoveUntil('/', (route) => false);
-          },
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              ElevatedButton(
+                child: const Text('Logout'),
+                onPressed: () async {
+                  await AuthService().signOut();
+                  Navigator.of(context)
+                      .pushNamedAndRemoveUntil('/', (route) => false);
+                },
+              ),
+              SimpleRecorder(),
+            ],
+          ),
         ));
   }
 }
