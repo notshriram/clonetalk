@@ -16,7 +16,7 @@ class HomeWidget extends StatelessWidget {
         onPressed: () {
           Navigator.pushNamed(context, '/about');
         },
-        child: const Icon(Icons.arrow_forward),
+        child: const Icon(Icons.plus_one),
       ),
       bottomNavigationBar: const BottomNavBar(),
     );

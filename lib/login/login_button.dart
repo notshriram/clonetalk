@@ -17,13 +17,15 @@ class LoginButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-        margin: const EdgeInsets.symmetric(horizontal: 30),
+        margin: const EdgeInsets.symmetric(horizontal: 40),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         child: ElevatedButton.icon(
           icon: Icon(icon, color: Colors.white, size: 30),
           label: Text(text, style: const TextStyle(color: Colors.white)),
           style: TextButton.styleFrom(
+            minimumSize: Size.fromHeight(30),
             backgroundColor: color,
-            padding: const EdgeInsets.symmetric(vertical: 15),
+            padding: const EdgeInsets.all(15),
           ),
           onPressed: () => loginMethod(),
         ));
