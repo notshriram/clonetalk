@@ -15,7 +15,7 @@ class HomeWidget extends StatelessWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.pushNamed(context, '/about');
+          Navigator.pushNamed(context, '/new');
         },
         child: const FaIcon(FontAwesomeIcons.plus),
       ),

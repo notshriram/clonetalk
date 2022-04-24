@@ -76,6 +76,7 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
   bool _mRecorderIsInited = false;
   bool _mplaybackReady = false;
   String _timerText = '00:00:00';
+
   void initializer() async {
     await Permission.microphone.request();
   }
