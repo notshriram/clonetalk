@@ -7,13 +7,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_sound_platform_interface/flutter_sound_recorder_platform_interface.dart';
 import 'package:permission_handler/permission_handler.dart';
-
+import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:intl/intl.dart' show DateFormat;
 //import firebase storage
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 
 typedef _Fn = void Function();
 
@@ -59,11 +59,16 @@ class _CreateScreenState extends State<CreateScreen> {
     }
   }
 
+  //get storage permission
+  void getPermission() async {
+    await Permission.storage.request();
+    await Permission.manageExternalStorage.request();
+  }
+
   @override
   void initState() {
     getUserAudio().then((value) => {
           setState(() {
-            _uri = value;
             _audioExists = true;
           })
         });
@@ -73,7 +78,25 @@ class _CreateScreenState extends State<CreateScreen> {
         _mPlayerIsInited = true;
       });
     });
+    getPermission();
+
     super.initState();
+  }
+
+  Future<Directory?> getStorageDirectory() async {
+    if (Platform.isAndroid) {
+      return (await getExternalStorageDirectory());
+      // OR return "/storage/emulated/0/Download";
+    } else {
+      return (await getApplicationDocumentsDirectory());
+    }
+  }
+
+  void showDownloadProgress(received, total) {
+    if (total != -1) {
+      //ignore: avoid_print
+      print((received / total * 100).toStringAsFixed(0) + "%");
+    }
   }
 
   //generate audio from server using POST Request
@@ -87,19 +110,61 @@ class _CreateScreenState extends State<CreateScreen> {
     // token works
     //ignore: avoid_print
     print(token);
-    Map<String, String> body = {"text": "hello world", "accept": "audio/mp3"};
+    //accept aac audio
+    Map<String, String> body = {
+      "text": "hello world",
+      "accept": "audio/X-HX-AAC-ADTS"
+    };
 
-    Dio dio = Dio();
-    var data = FormData.fromMap(body);
-    dio.options.headers['content-Type'] = 'application/json';
-    dio.options.headers["authorization"] = token;
-    final response =
-        await dio.post("http://shrigmac.local:5000/api/generate", data: data);
-    //ignore: avoid_print
-    print(response.statusCode);
+    // Dio dio = Dio();
+    // var data = FormData.fromMap(body);
+    // dio.options.headers['content-Type'] = 'application/json';
+    // dio.options.headers["authorization"] = token;
+    // dio.options.headers["accept"] = 'audio/X-HX-AAC-ADTS';
+
+    var headers = {
+      "authorization": token,
+      "accept": "audio/X-HX-AAC-ADTS",
+    };
+
+    try {
+      final response = await http.post(
+          Uri.parse("http://192.168.0.105:5000/api/generate"),
+          headers: headers,
+          body: body);
+      // //ignore: avoid_print
+      // print(response.data.toString());
+
+      //get datetime
+      final date = DateTime.now();
+      final formatter = DateFormat('yyyy-MM-dd-HH-mm-ss');
+
+      //response as audio file wav
+      Directory? tempDir = await getStorageDirectory();
+      String tempPath = tempDir!.path;
+      //save file with datetime
+      final savePath = '$tempPath/' + formatter.format(date) + '.aac';
+      //ignore: avoid_print
+      print(response.headers);
+      File file = File(savePath);
+
+      //save file
+      file.writeAsBytesSync(response.bodyBytes);
+
+      setState(() {
+        _uri = Uri.file(savePath);
+      });
+      return;
+    } catch (e) {
+      //ignore: avoid_print
+      print(e);
+      rethrow;
+    }
   }
 
   _Fn? getPlaybackFn() {
+    //ignore: avoid_print
+    print(_uri);
     if (!_mPlayerIsInited || !_audioExists) {
       return null;
     }
@@ -108,6 +173,8 @@ class _CreateScreenState extends State<CreateScreen> {
 
   void play() {
     assert(_mPlayerIsInited && _audioExists);
+    // ignore: avoid_print
+    print(_uri);
     _mPlayer!
         .startPlayer(
             fromURI: _uri.toString(),
@@ -182,12 +249,12 @@ class _CreateScreenState extends State<CreateScreen> {
                       'Audio Sample Does not exist. Please navigate to your profile and upload your voice sample.'),
             ),
             ElevatedButton(
-              child: const Text("Play Sample"),
-              onPressed: getPlaybackFn(),
+              child: const Text("Generate"),
+              onPressed: () => {generateAudio()},
             ),
             ElevatedButton(
-              child: const Text("Token"),
-              onPressed: () => generateAudio(),
+              child: const Text("Play"),
+              onPressed: getPlaybackFn(),
             ),
           ],
         ),
