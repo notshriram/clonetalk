@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:audio_session/audio_session.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -11,6 +13,7 @@ import 'dart:io';
 import 'package:intl/intl.dart' show DateFormat;
 //import firebase storage
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:dio/dio.dart';
 
 typedef _Fn = void Function();
 
@@ -71,6 +74,29 @@ class _CreateScreenState extends State<CreateScreen> {
       });
     });
     super.initState();
+  }
+
+  //generate audio from server using POST Request
+  Future<void> generateAudio() async {
+    //get firebase auth token
+    final FirebaseAuth _auth = FirebaseAuth.instance;
+    //get auth token
+    final user = FirebaseAuth.instance.currentUser!;
+    final token = await user.getIdToken();
+
+    // token works
+    //ignore: avoid_print
+    print(token);
+    Map<String, String> body = {"text": "hello world", "accept": "audio/mp3"};
+
+    Dio dio = Dio();
+    var data = FormData.fromMap(body);
+    dio.options.headers['content-Type'] = 'application/json';
+    dio.options.headers["authorization"] = token;
+    final response =
+        await dio.post("http://shrigmac.local:5000/api/generate", data: data);
+    //ignore: avoid_print
+    print(response.statusCode);
   }
 
   _Fn? getPlaybackFn() {
@@ -158,6 +184,10 @@ class _CreateScreenState extends State<CreateScreen> {
             ElevatedButton(
               child: const Text("Play Sample"),
               onPressed: getPlaybackFn(),
+            ),
+            ElevatedButton(
+              child: const Text("Token"),
+              onPressed: () => generateAudio(),
             ),
           ],
         ),
