@@ -1,6 +1,7 @@
 import 'package:clonetalk/login/login_button.dart';
 import 'package:clonetalk/services/auth.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -22,7 +23,7 @@ class LoginScreen extends StatelessWidget {
               child: const Text('Go to About'),
             ),
             LoginButton(
-              icon: Icons.person,
+              icon: FontAwesomeIcons.person,
               text: 'Login as Guest',
               color: Colors.purple,
               loginMethod: AuthService().anonLogin,
@@ -31,7 +32,7 @@ class LoginScreen extends StatelessWidget {
                 color: Colors.blue,
                 text: 'Login with Google',
                 loginMethod: AuthService().googleLogin,
-                icon: Icons.g_mobiledata)
+                icon: FontAwesomeIcons.google)
             //set padding
           ],
         ),

@@ -59,6 +59,8 @@ const theSource = AudioSource.microphone;
 
 /// Example app.
 class SimpleRecorder extends StatefulWidget {
+  const SimpleRecorder({Key? key}) : super(key: key);
+
   @override
   _SimpleRecorderState createState() => _SimpleRecorderState();
 }
@@ -76,8 +78,6 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
   String _timerText = '00:00:00';
   void initializer() async {
     await Permission.microphone.request();
-    await Permission.storage.request();
-    await Permission.manageExternalStorage.request();
   }
 
   @override
@@ -179,9 +179,6 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
   }
 
   void play() {
-    //upload to firebase
-    uploadAudioFirebase();
-
     assert(_mPlayerIsInited &&
         _mplaybackReady &&
         _mRecorder!.isStopped &&
@@ -246,6 +243,13 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
     return _mPlayer!.isStopped ? play : stopPlayer;
   }
 
+  _Fn? getUploadFn() {
+    if (!_mPlayerIsInited || !_mplaybackReady || !_mRecorder!.isStopped) {
+      return null;
+    }
+    return _mPlayer!.isStopped ? uploadAudioFirebase : stopPlayer;
+  }
+
   @override
   Widget build(BuildContext context) {
     Widget makeBody() {
@@ -258,7 +262,7 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
             width: double.infinity,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFFAF0E6),
+              color: Colors.purple[300],
               border: Border.all(
                 color: Colors.indigo,
                 width: 3,
@@ -286,7 +290,7 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
             width: double.infinity,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: const Color(0xFFFAF0E6),
+              color: Colors.pink[400],
               border: Border.all(
                 color: Colors.indigo,
                 width: 3,
@@ -305,6 +309,32 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
               Text(_mPlayer!.isPlaying
                   ? 'Playback in progress'
                   : 'Player is stopped'),
+            ]),
+          ),
+          Container(
+            margin: const EdgeInsets.all(3),
+            padding: const EdgeInsets.all(3),
+            height: 80,
+            width: double.infinity,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Colors.green[400],
+              border: Border.all(
+                color: Colors.indigo,
+                width: 3,
+              ),
+            ),
+            child: Row(children: [
+              ElevatedButton(
+                onPressed: getUploadFn(),
+                //color: Colors.white,
+                //disabledColor: Colors.grey,
+                child: const Text('Upload'),
+              ),
+              const SizedBox(
+                width: 20,
+              ),
+              const Text('Uploading audio'),
             ]),
           ),
         ],

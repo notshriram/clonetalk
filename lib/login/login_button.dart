@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class LoginButton extends StatelessWidget {
   final Color color;
@@ -20,10 +21,10 @@ class LoginButton extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 40),
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: ElevatedButton.icon(
-          icon: Icon(icon, color: Colors.white, size: 30),
+          icon: FaIcon(icon),
           label: Text(text, style: const TextStyle(color: Colors.white)),
           style: TextButton.styleFrom(
-            minimumSize: Size.fromHeight(30),
+            minimumSize: const Size.fromHeight(30),
             backgroundColor: color,
             padding: const EdgeInsets.all(15),
           ),

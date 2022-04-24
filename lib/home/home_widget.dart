@@ -1,5 +1,6 @@
 import 'package:clonetalk/shared/bottom_nav.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class HomeWidget extends StatelessWidget {
   const HomeWidget({
@@ -16,7 +17,7 @@ class HomeWidget extends StatelessWidget {
         onPressed: () {
           Navigator.pushNamed(context, '/about');
         },
-        child: const Icon(Icons.plus_one),
+        child: const FaIcon(FontAwesomeIcons.plus),
       ),
       bottomNavigationBar: const BottomNavBar(),
     );
