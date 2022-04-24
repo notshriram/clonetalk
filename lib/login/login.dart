@@ -2,6 +2,7 @@ import 'package:clonetalk/login/login_button.dart';
 import 'package:clonetalk/services/auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LoginScreen extends StatelessWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -15,7 +16,21 @@ class LoginScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('Login'),
+            RichText(
+                text: TextSpan(children: [
+              TextSpan(
+                  text: 'Clone',
+                  style: GoogleFonts.poppins(
+                      fontSize: 40,
+                      fontWeight: FontWeight.w300,
+                      color: Colors.indigo)),
+              TextSpan(
+                  text: 'talk.',
+                  style: GoogleFonts.poppins(
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.amber)),
+            ])),
             ElevatedButton(
               onPressed: () {
                 Navigator.pushNamed(context, '/about');
