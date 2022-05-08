@@ -63,7 +63,9 @@ const theSource = AudioSource.microphone;
 
 /// Example app.
 class SimpleRecorder extends StatefulWidget {
-  const SimpleRecorder({Key? key}) : super(key: key);
+  const SimpleRecorder({Key? key, required this.setThreadId}) : super(key: key);
+
+  final void Function(String) setThreadId;
 
   @override
   _SimpleRecorderState createState() => _SimpleRecorderState();
@@ -91,7 +93,10 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
   bool _mRecorderIsInited = false;
   bool _mplaybackReady = false;
   String _timerText = '00:00:00';
-  String? _threadId;
+
+  bool _uploadReady = false;
+  bool _uploading = false;
+  bool _uploaded = false;
 
   void initializer() async {
     await Permission.microphone.request();
@@ -191,6 +196,7 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
       setState(() {
         url = value;
         _mplaybackReady = true;
+        _uploadReady = true;
       });
     });
   }
@@ -223,6 +229,10 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
         _mplaybackReady &&
         _mRecorder!.isStopped &&
         _mPlayer!.isStopped);
+    setState(() {
+      _uploading = true;
+      _uploadReady = false;
+    });
     //get the audio file
     final file = (File(url!));
 
@@ -268,7 +278,12 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
           var decoder = const Utf8Decoder();
           var result = decoder.convert(value);
 
-          setState(() => _threadId = result);
+          widget.setThreadId(result);
+
+          setState(() {
+            _uploaded = true;
+            _uploading = false;
+          });
 
           //ignore: avoid_print
           print(result);
@@ -411,7 +426,13 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
               const SizedBox(
                 width: 20,
               ),
-              Text(_threadId ?? "Uploading..."),
+              Text(_uploadReady
+                  ? 'Ready To Upload'
+                  : _uploading
+                      ? 'Uploading...'
+                      : _uploaded
+                          ? 'Uploaded'
+                          : 'Not Ready'),
             ]),
           ),
         ],

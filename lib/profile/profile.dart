@@ -23,7 +23,6 @@ class ProfileScreen extends StatelessWidget {
                       .pushNamedAndRemoveUntil('/', (route) => false);
                 },
               ),
-              const SimpleRecorder(),
             ],
           ),
         ));

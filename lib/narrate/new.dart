@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:audio_session/audio_session.dart';
+import 'package:clonetalk/profile/recorder.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -14,6 +16,7 @@ import 'package:intl/intl.dart' show DateFormat;
 //import firebase storage
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
 
 typedef _Fn = void Function();
 
@@ -25,40 +28,17 @@ class CreateScreen extends StatefulWidget {
 }
 
 class _CreateScreenState extends State<CreateScreen> {
+  final _formKey = GlobalKey<FormState>();
   bool _audioExists = false;
+  bool _downloadable = false;
   late Uri _uri;
   Uri? _fileLocation;
   bool _mPlayerIsInited = false;
+  double progress = 0;
+  String? _threadId;
+  bool _generating = false;
 
   FlutterSoundPlayer? _mPlayer = FlutterSoundPlayer();
-
-  Future<Uri> getUserAudio() async {
-    //get current user ID
-    final FirebaseAuth _auth = FirebaseAuth.instance;
-    //get auth user id
-    final user = FirebaseAuth.instance.currentUser!;
-    final userId = user.uid;
-
-    try {
-      FirebaseStorage storage = FirebaseStorage.instance;
-      Reference ref = storage.ref().child(userId);
-      //get the file
-      final url = await ref.getDownloadURL();
-      setState(() {
-        _audioExists = true;
-      });
-      // ignore: avoid_print
-      print(url);
-      return Uri.parse(url);
-    } catch (e) {
-      setState(() {
-        _audioExists = false;
-      });
-      // ignore: avoid_print
-      print("error downloading audio" + e.toString());
-      rethrow;
-    }
-  }
 
   //get storage permission
   void getPermission() async {
@@ -68,13 +48,6 @@ class _CreateScreenState extends State<CreateScreen> {
 
   @override
   void initState() {
-    getUserAudio().then((value) => {
-          setState(() {
-            _uri = value;
-            _audioExists = true;
-          })
-        });
-
     _mPlayer!.openPlayer().then((value) {
       setState(() {
         _mPlayerIsInited = true;
@@ -83,6 +56,23 @@ class _CreateScreenState extends State<CreateScreen> {
     getPermission();
 
     super.initState();
+  }
+
+  Future<void> queryProgress() async {
+    var progressRequest = http.Request(
+        'GET', Uri.parse('http://192.168.0.108:8888/progress/$_threadId'));
+    progressRequest.headers.addAll({'Accept': 'text/plain'});
+    var response = await progressRequest.send();
+    if (response.statusCode == 200) {
+      response.stream.listen((value) {
+        //decode utf-8
+        var decoder = const Utf8Decoder();
+        var result = decoder.convert(value);
+        setState(() {
+          progress = double.parse(result);
+        });
+      });
+    }
   }
 
   Future<Directory?> getStorageDirectory() async {
@@ -102,7 +92,7 @@ class _CreateScreenState extends State<CreateScreen> {
   }
 
   //generate audio from server using POST Request
-  Future<void> generateAudio() async {
+  Future<void> getGeneratedAudio() async {
     //get firebase auth token
     final FirebaseAuth _auth = FirebaseAuth.instance;
     //get auth token
@@ -112,11 +102,6 @@ class _CreateScreenState extends State<CreateScreen> {
     // token works
     //ignore: avoid_print
     print(token);
-    //accept aac audio
-    Map<String, String> body = {
-      "text": "hello world",
-      "accept": "audio/X-HX-AAC-ADTS"
-    };
 
     // Dio dio = Dio();
     // var data = FormData.fromMap(body);
@@ -126,14 +111,13 @@ class _CreateScreenState extends State<CreateScreen> {
 
     var headers = {
       "authorization": token,
-      "accept": "audio/X-HX-AAC-ADTS",
+      "accept": "audio/x-wav",
     };
 
     try {
-      final response = await http.post(
-          Uri.parse("http://192.168.0.105:5000/api/generate"),
-          headers: headers,
-          body: body);
+      final response = await http.get(
+          Uri.parse("http://192.168.0.108:8888/download/$_threadId"),
+          headers: headers);
       // //ignore: avoid_print
       // print(response.data.toString());
 
@@ -145,17 +129,18 @@ class _CreateScreenState extends State<CreateScreen> {
       Directory? tempDir = await getStorageDirectory();
       String tempPath = tempDir!.path;
       //save file with datetime
-      final savePath = '$tempPath/' + formatter.format(date) + '.aac';
+      final savePath = '$tempPath/' + formatter.format(date) + '.wav';
       //ignore: avoid_print
       print(response.headers);
       File file = File(savePath);
 
-      //save file
-      file.writeAsBytesSync(response.bodyBytes);
+      //download the file from response
+      await file.writeAsBytes(response.bodyBytes);
 
       setState(() {
         _fileLocation = Uri.file(savePath);
       });
+      print('File locn downloaded $_fileLocation');
       return;
     } catch (e) {
       //ignore: avoid_print
@@ -167,20 +152,20 @@ class _CreateScreenState extends State<CreateScreen> {
   _Fn? getPlaybackFn() {
     //ignore: avoid_print
     //print(_uri);
-    if (!_mPlayerIsInited || !_audioExists) {
+    if (!_mPlayerIsInited || _fileLocation == null) {
       return null;
     }
     return _mPlayer!.isStopped ? play : stopPlayer;
   }
 
   void play() {
-    assert(_mPlayerIsInited && _audioExists);
+    assert(_mPlayerIsInited && _fileLocation != null);
     // ignore: avoid_print
     //print(_uri);
     _mPlayer!
         .startPlayer(
             fromURI: _fileLocation.toString(),
-            codec: kIsWeb ? Codec.opusWebM : Codec.aacADTS,
+            codec: kIsWeb ? Codec.opusWebM : Codec.pcm16WAV,
             whenFinished: () {
               setState(() {});
             })
@@ -192,6 +177,13 @@ class _CreateScreenState extends State<CreateScreen> {
   void stopPlayer() {
     _mPlayer!.stopPlayer().then((value) {
       setState(() {});
+    });
+  }
+
+  void cancel() {
+    //cancel generating
+    setState(() {
+      _generating = false;
     });
   }
 
@@ -214,11 +206,29 @@ class _CreateScreenState extends State<CreateScreen> {
     return null;
   }
 
-  _Fn? getGenerateFn() {
-    if (_audioExists) {
-      return generateAudio;
+  _Fn? getDownloadFn() {
+    if (_downloadable) {
+      return getGeneratedAudio;
     }
     return null;
+  }
+
+  void setThreadId(String threadId) {
+    //ignore: avoid_print
+    print('Setting Thread Id $threadId');
+    setState(() {
+      _threadId = threadId;
+    });
+    Timer timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      queryProgress();
+      if (progress >= 98) {
+        timer.cancel();
+        setState(() {
+          progress = 100;
+          _downloadable = true;
+        });
+      }
+    });
   }
 
   @override
@@ -230,36 +240,62 @@ class _CreateScreenState extends State<CreateScreen> {
       body: Center(
         child: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              // if audio sample exists, show form else show text
-              child: _audioExists
-                  ? Column(children: const [
-                      Text(
-                        'Title',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      Text(
-                        'Narration Text',
-                        style: TextStyle(fontSize: 20),
-                      ),
-                      TextField(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ])
-                  : const Text(
-                      'Audio Sample Does not exist. Please navigate to your profile and upload your voice sample.'),
+            SimpleRecorder(
+              setThreadId: setThreadId,
             ),
+            Form(
+              key: _formKey,
+              child: Column(children: [
+                const Text(
+                  'Title',
+                  style: TextStyle(fontSize: 20),
+                ),
+                TextFormField(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const Text(
+                  'Narration Text',
+                  style: TextStyle(fontSize: 20),
+                ),
+                TextFormField(
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter some text';
+                    }
+                    return null;
+                  },
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ]),
+            ),
+            _threadId != null
+                ? Container(
+                    width: double.infinity,
+                    height: 40,
+                    padding: const EdgeInsets.all(10),
+                    child: LiquidLinearProgressIndicator(
+                      value: progress / 100, // Defaults to 0.5.
+                      borderColor: Colors.red,
+                      borderWidth: 0.0,
+                      borderRadius:
+                          12.0, // The direction the liquid moves (Axis.vertical = bottom to top, Axis.horizontal = left to right). Defaults to Axis.horizontal.
+                      center: Text("generating..."),
+                    ),
+                  )
+                : Container(),
             ElevatedButton(
-              child: const Text("Generate"),
-              onPressed: getGenerateFn(),
+              child: const Text("download"),
+              onPressed: getDownloadFn(),
             ),
             ElevatedButton(
               child: const Text("Play"),
