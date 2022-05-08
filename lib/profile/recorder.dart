@@ -267,20 +267,15 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
           //decode utf-8
           var decoder = const Utf8Decoder();
           var result = decoder.convert(value);
+
+          setState(() => _threadId = result);
+
           //ignore: avoid_print
           print(result);
         });
       }
     });
     return null;
-
-    // // upload the file
-    // final response = await http.post(
-    //   Uri.parse("http://192.168.0.105:5000/api/generate"),
-    //   body: {'authorization': token},
-    //   headers: {'Content-Type': 'audio/x-wav'},
-    //   files: {'file': file},
-    // );
   }
 
   Future<Uri?> uploadAudioFirebase() async {
@@ -416,7 +411,7 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
               const SizedBox(
                 width: 20,
               ),
-              const Text('Uploading audio'),
+              Text(_threadId ?? "Uploading..."),
             ]),
           ),
         ],
