@@ -16,7 +16,10 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+import 'dart:convert';
 
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -24,6 +27,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:flutter_sound_platform_interface/flutter_sound_recorder_platform_interface.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:http_parser/http_parser.dart';
 
 import 'dart:async';
 import 'dart:io';
@@ -65,9 +69,20 @@ class SimpleRecorder extends StatefulWidget {
   _SimpleRecorderState createState() => _SimpleRecorderState();
 }
 
+Future<Directory?> getStorageDirectory() async {
+  if (Platform.isAndroid) {
+    return (await getExternalStorageDirectory());
+    // OR return "/storage/emulated/0/Download";
+  } else {
+    return (await getApplicationDocumentsDirectory());
+  }
+}
+
 class _SimpleRecorderState extends State<SimpleRecorder> {
   final FirebaseStorage _storage = FirebaseStorage.instance;
   Codec _codec = Codec.aacADTS;
+  //response as audio file wav
+
   String _mPath = 'tau_file.aac';
   late String? url;
   FlutterSoundPlayer? _mPlayer = FlutterSoundPlayer();
@@ -76,6 +91,7 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
   bool _mRecorderIsInited = false;
   bool _mplaybackReady = false;
   String _timerText = '00:00:00';
+  String? _threadId;
 
   void initializer() async {
     await Permission.microphone.request();
@@ -151,8 +167,8 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
   void record() {
     _mRecorder!
         .startRecorder(
-      toFile: _mPath,
       codec: _codec,
+      toFile: _mPath,
       audioSource: theSource,
     )
         .then((value) {
@@ -186,8 +202,8 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
         _mPlayer!.isStopped);
     _mPlayer!
         .startPlayer(
-            fromURI: _mPath,
-            codec: kIsWeb ? Codec.opusWebM : Codec.aacADTS,
+            fromURI: url,
+            codec: kIsWeb ? Codec.opusWebM : _codec,
             whenFinished: () {
               setState(() {});
             })
@@ -200,6 +216,71 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
     _mPlayer!.stopPlayer().then((value) {
       setState(() {});
     });
+  }
+
+  Future<String?> uploadToAPI() async {
+    assert(_mPlayerIsInited &&
+        _mplaybackReady &&
+        _mRecorder!.isStopped &&
+        _mPlayer!.isStopped);
+    //get the audio file
+    final file = (File(url!));
+
+    //get auth user id
+    final user = FirebaseAuth.instance.currentUser!;
+    final token = await user.getIdToken();
+
+    // final streamedRequest = http.StreamedRequest(
+    //     'POST', Uri.parse('http://192.168.0.108:8888/generate'))
+    //   ..headers.addAll({
+    //     'Cache-Control': 'no-cache',
+    //     'authorization': token,
+    //     'content-type': 'audio/X-HX-AAC-ADTS'
+    //   });
+    // streamedRequest.contentLength = await file.length();
+    // file.openRead().listen((chunk) {
+    //   // ignore: avoid_print
+    //   print(chunk.length);
+    //   streamedRequest.sink.add(chunk);
+    // }, onDone: () {
+    //   streamedRequest.sink.close();
+    // });
+
+    //final response = await streamedRequest.send();
+
+    //send audio file to api
+
+    var request = http.MultipartRequest(
+        "POST", Uri.parse('http://192.168.0.108:8888/generate'));
+    request.fields['authorization'] = token;
+    request.fields['text'] = 'test';
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      file.path,
+      contentType: MediaType('audio', 'X-HX-AAC-ADTS'),
+    ));
+    request.send().then((response) {
+      // ignore: avoid_print
+
+      if (response.statusCode == 200) {
+        response.stream.listen((value) {
+          //decode utf-8
+          var decoder = const Utf8Decoder();
+          var result = decoder.convert(value);
+          //ignore: avoid_print
+          print(result);
+        });
+      }
+    });
+    return null;
+
+    // // upload the file
+    // final response = await http.post(
+    //   Uri.parse("http://192.168.0.105:5000/api/generate"),
+    //   body: {'authorization': token},
+    //   headers: {'Content-Type': 'audio/x-wav'},
+    //   files: {'file': file},
+    // );
   }
 
   Future<Uri?> uploadAudioFirebase() async {
@@ -248,7 +329,7 @@ class _SimpleRecorderState extends State<SimpleRecorder> {
     if (!_mPlayerIsInited || !_mplaybackReady || !_mRecorder!.isStopped) {
       return null;
     }
-    return _mPlayer!.isStopped ? uploadAudioFirebase : stopPlayer;
+    return _mPlayer!.isStopped ? uploadToAPI : stopPlayer;
   }
 
   @override

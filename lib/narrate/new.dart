@@ -27,6 +27,7 @@ class CreateScreen extends StatefulWidget {
 class _CreateScreenState extends State<CreateScreen> {
   bool _audioExists = false;
   late Uri _uri;
+  Uri? _fileLocation;
   bool _mPlayerIsInited = false;
 
   FlutterSoundPlayer? _mPlayer = FlutterSoundPlayer();
@@ -69,6 +70,7 @@ class _CreateScreenState extends State<CreateScreen> {
   void initState() {
     getUserAudio().then((value) => {
           setState(() {
+            _uri = value;
             _audioExists = true;
           })
         });
@@ -152,7 +154,7 @@ class _CreateScreenState extends State<CreateScreen> {
       file.writeAsBytesSync(response.bodyBytes);
 
       setState(() {
-        _uri = Uri.file(savePath);
+        _fileLocation = Uri.file(savePath);
       });
       return;
     } catch (e) {
@@ -164,7 +166,7 @@ class _CreateScreenState extends State<CreateScreen> {
 
   _Fn? getPlaybackFn() {
     //ignore: avoid_print
-    print(_uri);
+    //print(_uri);
     if (!_mPlayerIsInited || !_audioExists) {
       return null;
     }
@@ -174,10 +176,10 @@ class _CreateScreenState extends State<CreateScreen> {
   void play() {
     assert(_mPlayerIsInited && _audioExists);
     // ignore: avoid_print
-    print(_uri);
+    //print(_uri);
     _mPlayer!
         .startPlayer(
-            fromURI: _uri.toString(),
+            fromURI: _fileLocation.toString(),
             codec: kIsWeb ? Codec.opusWebM : Codec.aacADTS,
             whenFinished: () {
               setState(() {});
@@ -208,6 +210,13 @@ class _CreateScreenState extends State<CreateScreen> {
   _Fn? getAudioFn() {
     if (_audioExists) {
       return createNewNarration;
+    }
+    return null;
+  }
+
+  _Fn? getGenerateFn() {
+    if (_audioExists) {
+      return generateAudio;
     }
     return null;
   }
@@ -250,7 +259,7 @@ class _CreateScreenState extends State<CreateScreen> {
             ),
             ElevatedButton(
               child: const Text("Generate"),
-              onPressed: () => {generateAudio()},
+              onPressed: getGenerateFn(),
             ),
             ElevatedButton(
               child: const Text("Play"),
