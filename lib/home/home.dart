@@ -1,7 +1,6 @@
 import 'package:clonetalk/home/home_widget.dart';
 import 'package:clonetalk/login/login.dart';
 import 'package:clonetalk/services/auth.dart';
-import 'package:clonetalk/shared/bottom_nav.dart';
 import 'package:flutter/material.dart';
 
 class HomeScreen extends StatelessWidget {

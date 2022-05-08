@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 
 import 'package:audio_session/audio_session.dart';
 import 'package:clonetalk/profile/recorder.dart';
@@ -13,8 +12,6 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:intl/intl.dart' show DateFormat;
-//import firebase storage
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:http/http.dart' as http;
 import 'package:liquid_progress_indicator/liquid_progress_indicator.dart';
 
